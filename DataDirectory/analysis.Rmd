@@ -1,0 +1,136 @@
+---
+title: "Facebook Use and Mood"
+output: html_document
+---
+
+Read in the data.
+
+```{r}
+dat<-read.csv("data.csv")
+```
+
+Check the structure of the data. 
+```{r}
+str(dat)
+```
+
+We will run an ANOVA to determine if the means of the PANAS scores of the Groups have differences that are significant. 
+ 
+```{r}
+summary(aov(PANAS~Group, data=dat))
+```
+
+There is no significant effect for differences of the mean PANAS scores of the Groups, F(2,68) = 0.9, p = .42. 
+
+To interpret these data better, we will create a bar graph that shows how mood was affected by the activities in each of the groups. To create a figure of the data we need to load the ggplot2, gplots, and dplyr libraries.
+
+```{r}
+library(ggplot2)
+library(gplots)
+library(dplyr)
+```
+
+We need to use dplyr to summarize the data and find the means and
+standard errors of the means for the different groups.
+```{r}
+temp<-dat%>%group_by(Group)%>%
+  summarize(means=mean(PANAS),
+            sems=sd(PANAS)/sqrt(length(PANAS)))
+```
+Now that the data is summarized I can create a figure of the data.
+
+```{r}
+f<-ggplot(temp,aes(x=factor(Group),y=means))+
+  geom_bar(stat="identity", color="black",
+           fill=c("deepskyblue2", "deeppink2","green2"))+
+  geom_errorbar(aes(ymax=means+sems,
+                    ymin=means-sems),
+                width=.2)+
+  ggtitle("Mood by Groups")+
+  labs(x="Group", y="PANAS Score")+
+  scale_x_discrete(breaks=c("Control","Facebook","Online"),
+                   labels=c("Control","Facebook","Online"))+
+  theme(plot.title=element_text(size=15,
+                                face="bold",
+                                vjust=.5))+
+  theme(axis.title.x=element_text(size=12,
+                                  face="bold",
+                                  vjust=-.25))+
+  theme(axis.title.y=element_text(size=12,
+                                  face="bold",
+                                  vjust=.25))+
+  theme(axis.text.x=element_text(size=10,
+                                 face="bold",
+                                 color="black"))+
+  theme(axis.text.y=element_text(size=10,
+                                 face="bold",
+                                 color="black"))+
+  coord_cartesian(ylim=c(min(temp$means)-2*max(temp$sems),
+                         max(temp$means)+2*max(temp$sems)))+
+  theme(panel.border=element_blank(),
+        axis.line=element_line())+
+  theme(panel.grid.major.x=element_blank())+
+  theme(panel.grid.major.y=element_line(color="darkgrey"))+
+  theme(panel.grid.minor.y=element_blank())
+f
+```
+
+Our hypothesis was that Facebook would have the effect of lower moods in males than in females. Therefore, even though there was no significant effect of mood between the groups, we want to see if there was a difference in mood between males and females in the groups. 
+
+Now, we will perform a between-subjects 2-way ANOVA looking for effects
+of and interactions between the different Groups and Gender.
+```{r}
+summary(aov(PANAS~Group*Gender, data=dat))
+```
+
+The analyses show that there was no effect of Group, F(2,65) = 0.9, p = 0.43. There was no effect of Gender, F(1,65) = 0.3, p = 0.57. There was no interaction between Group and Gender, F(2,65) = 1.0, p = 0.39.
+
+To help us interpret the earlier analyses, we will create grouped bar graphs for the data we analyzed. 
+
+First we need to
+summarize the data.
+```{r}
+temp<-dat%>%group_by(Group,Gender)%>%
+  summarize(means=mean(PANAS),
+            sems=sd(PANAS)/sqrt(length(n)))
+```
+
+```{r}
+f<-ggplot(temp, aes(x=Group,
+                    y=means,
+                    fill=Gender))+
+  geom_bar(stat="identity",position=position_dodge())+
+  scale_fill_manual(values=c("deeppink2","deepskyblue2"),
+                     name="Gender",
+                     breaks=c("Female","Male"),
+                     labels=c("Female", "Male"))+
+  geom_errorbar(aes(ymax=means+sems,
+                    ymin=means-sems),
+                width=.2,
+                position=position_dodge(.9))+
+  ggtitle("Mood by Group and Gender")+
+  labs(x="Group",y="PANAS")+
+  theme(plot.title=element_text(size=15,face="bold",vjust=.5))+
+  theme(axis.title.x=element_text(size=12,face="bold",vjust=-.25))+
+  theme(axis.title.y=element_text(size=12,face="bold",vjust=1))+
+  theme(axis.text.x=element_text(size=10,face="bold",color="black"))+
+  theme(axis.text.y=element_text(size=10,face="bold",color="black"))+
+  coord_cartesian(ylim=c(min(temp$means)-2*max(temp$sems),
+                         max(temp$means)+2*max(temp$sems)))+
+  theme(panel.border=element_blank(),axis.line=element_line())+
+  theme(panel.grid.major.x=element_blank())+
+  theme(panel.grid.major.y=element_line(color="darkgrey"))+
+  theme(panel.grid.minor.y=element_blank())+
+  theme(legend.position=c(.15,.83))+
+  theme(legend.background=element_blank())+
+  theme(legend.background=element_rect(color="black"))+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_text(size=12))+
+  theme(legend.title.align=.5)+
+  theme(legend.text=element_text(size=10,face="bold"))
+f
+```
+
+From the output of our analysis, we can see that there were no significant effects or interactions in this experiment. Therefore, we were unable to confirm our hypotheses that the use of Facebook would result in decreased moods in participants, and that males would have more decreased moods than females.  We were also unable to replicate the findings of Sagioglou and Greitemeyer (2014).
+
+
